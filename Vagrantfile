@@ -7,9 +7,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     master.vm.box = "ubuntu/bionic64"
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.56.10"  # Static IP
-    master.vm.provision "shell", path: "./script/installDocker.sh"
+    master.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+    master.vm.provision "shell", path: "./script/installDocker.sh"    
     master.vm.provision "shell", inline: <<-SHELL
-      # Install Jenkins and load balancer setup
+    mkdir -p /app
+    SHELL
+    master.vm.synced_folder "./script/master", "/app"
+    master.vm.provision "shell", inline: <<-SHELL
+    cd /app
+    docker compose up -d
+    SHELL
+    master.vm.provision "shell", path: "./script/installJenkins.sh"
+    master.vm.provision "shell", inline: <<-SHELL
+    sudo cat /var/lib/jenkins/secrets/initialAdminPassword
     SHELL
   end
 
@@ -18,9 +28,30 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     agent.vm.box = "ubuntu/bionic64"
     agent.vm.hostname = "agent"
     agent.vm.network "private_network", ip: "192.168.56.11"  # Static IP
+    # agent.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+    # agent.vm.network "forwarded_port", guest: 80, host: 80, host_ip: "127.0.0.1"
+
     agent.vm.provision "shell", path: "./script/installDocker.sh"
+    # agent.vm.provision "shell", path: "./script/installJenkins.sh"
+    # agent.vm.provision "shell", inline: <<-SHELL
+    # sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+    # SHELL
     agent.vm.provision "shell", inline: <<-SHELL
-      # Install Jenkins agent
+      mkdir -p /app
+    SHELL
+    agent.vm.synced_folder "./app", "/app"
+
+    agent.vm.provision "shell", inline: <<-SHELL
+      echo -e '{ \n\t "insecure-registries" : [ "192.168.56.10:5000" ]\n}' | sudo tee /etc/docker/daemon.json
+      sudo systemctl daemon-reload
+      sudo systemctl restart docker
+    SHELL
+
+    agent.vm.provision "shell", inline: <<-SHELL
+      cd /app      
+      docker build -t app .
+      docker tag app 192.168.56.10:5000/app
+      docker push 192.168.56.10:5000/app || true
     SHELL
   end
 
@@ -39,6 +70,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       worker.vm.network "private_network", ip: ip  # Assign static IP
       worker.vm.provision "shell", path: "./script/installDocker.sh"
       worker.vm.provision "shell", inline: <<-SHELL
+        echo -e '{ \n\t "insecure-registries" : [ "192.168.56.10:5000" ]\n}' | sudo tee /etc/docker/daemon.json
+        sudo systemctl daemon-reload
+        sudo systemctl restart docker
+      SHELL
+
+      worker.vm.provision "shell", inline: <<-SHELL
+        docker run -d --network host --name app_#{name} --volume appData:/etc/todos 192.168.56.10:5000/app
       SHELL
     end
   end
