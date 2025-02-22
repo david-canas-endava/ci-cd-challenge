@@ -1,0 +1,23 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    network_mode: "host"  # Uses the host network
+    restart: unless-stopped
+    # volumes:
+    #   - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    network_mode: "host"
+    environment:
+      - SERVICES=ecr
+      - DATA_DIR=/var/lib/localstack/data  # Use a different location
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack_data:/var/lib/localstack"
+
+volumes:
+  localstack_data:
