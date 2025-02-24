@@ -4,6 +4,7 @@ pipeline {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
         BRANCH_NAME = "feature/jenkins" // Temporarily set this manually
+        SAFE_BRANCH = "feature-jenkins"
     }
     stages {        
         stage('Prepare Environment') {
@@ -82,8 +83,8 @@ pipeline {
                 // The container will be named "app_${WORKER_NAME}" and will run the image we just pushed.
                 // Note: Make sure the agent’s SSH keys and authorization are correctly set up.
                 sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                'docker run -d --network host --name app_${WORKER_NAME} --volume appData:/etc/todos ${REGISTRY}/${SAFE_BRANCH}'
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
+                'docker run -d --network host --volume appData:/etc/todos ${REGISTRY}/${SAFE_BRANCH}'
                 """
             }
         }
