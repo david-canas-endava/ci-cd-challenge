@@ -1,2 +1,2 @@
 # Intro
-this repo will store the
+this repo will store the code
