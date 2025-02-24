@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16">
   <diagram name="Page-1" id="eFnRYutm7QuCERlk3ahz">
-    <mxGraphModel dx="1323" dy="743" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1723" dy="743" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -21,7 +21,7 @@
         </mxCell>
         <mxCell id="weFMRSHEcYBNq2lGplRe-3" value="MASTER" style="swimlane;startSize=23;fontSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="i6uWURECUpU4FRqGuYxU-47">
           <mxGeometry width="240" height="370" as="geometry">
-            <mxRectangle x="1200" y="10" width="90" height="30" as="alternateBounds" />
+            <mxRectangle width="90" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="i6uWURECUpU4FRqGuYxU-66" value="Image registry" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;shape=process;fontSize=16.7;spacing=3.8;rounded=1;absoluteArcSize=1;arcSize=9;strokeWidth=NaN;lucidId=xuNUCCFulLaC;" parent="weFMRSHEcYBNq2lGplRe-3" vertex="1">
