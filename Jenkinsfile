@@ -62,7 +62,7 @@ pipeline {
                 sh 'mkdir -p /app'
                 
                 // Use the /app directory. If your checkout already happens in /app, adjust accordingly.
-                dir('/app') {
+                dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     // Build an image tagged as "app"
                     sh 'docker build -t app .'
                     
