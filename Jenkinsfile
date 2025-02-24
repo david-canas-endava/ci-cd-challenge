@@ -3,22 +3,24 @@ pipeline {
     environment {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
-        BRANCH_NAME = "feature/jenkins" // Temporarily set this manually
+        // BRANCH_NAME = "feature/jenkins" // Temporarily set this manually
+        // SAFE_BRANCH = "feature-jenkins"
     }
     stages {        
         stage('Prepare Environment') {
             steps {
                 script {
-                    // // Replace "/" with "-" so the tag is Docker-friendly.
-                    // env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
-                    // // Extract a key from the branch name.
-                    // // For example, "feature/jenkins" gives branchKey = "feature"
-                    // def branchKey = BRANCH_NAME.tokenize('/')[0]
-                    def branchKey = BRANCH_NAME
-                    // // Map branch keys to worker IPs.
+                    echo 'Pulling... ' + env.GIT_BRANCH
+                    // Replace "/" with "-" so the tag is Docker-friendly.
+                    def BRANCH_NAME = env.GIT_BRANCH
+                    env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
+                    // Extract a key from the branch name.
+                    // For example, "feature/jenkins" gives branchKey = "feature"
+                    def branchKey = BRANCH_NAME.tokenize('/')[1]
+                    // Map branch keys to worker IPs.
+                    echo "branch name ${BRANCH_NAME}"
+                    echo "branch key ${branchKey}"
                     def workerMap = [
-                        "prod1"   : "192.168.56.21",
-                        "prod2"   : "192.168.56.22",
                         "dev"     : "192.168.56.23",
                         "feature" : "192.168.56.24"
                     ]
@@ -32,7 +34,7 @@ pipeline {
                         env.WORKER_NAME = "feature" 
                     }
                     
-                    // echo "For branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH} and deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
+                    echo "For branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH} and deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
                 }
             }
         }
@@ -49,41 +51,46 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 checkout scm
-                // If your Vagrantfile already syncs code into /app and you wish to use that directory,
-                // you can optionally copy the workspace code to /app:
-                // sh 'mkdir -p /app && cp -r $WORKSPACE/* /app/'
             }
         }
         
-        // Build the Docker image, tag it, and push it.
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                // Ensure the target directory exists (if you intend to use /app)
-                sh 'mkdir -p /app'
-                
-                // Use the /app directory. If your checkout already happens in /app, adjust accordingly.
-                dir('/app') {
-                    // Build an image tagged as "app"
+                sh 'mkdir -p /home/jenkins_agent/workspace/githubPipeline/app'
+                dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     sh 'docker build -t app .'
-                    
-                    // Tag the built image with the registry and the branch-derived tag.
                     sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
-                    
-                    // Push the image to your local registry.
-                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker run -d --network host --volume /etc/todos:/etc/todos ${REGISTRY}/${SAFE_BRANCH}"
                 }
             }
         }
         
-        // SSH into the appropriate worker machine and run the container.
-        stage('Deploy on Worker') {
+        stage('Run Tests') {
             steps {
-                // The following command will SSH into the worker machine and run the container.
-                // The container will be named "app_${WORKER_NAME}" and will run the image we just pushed.
-                // Note: Make sure the agent’s SSH keys and authorization are correctly set up.
+                dir('/home/jenkins_agent/workspace/githubPipeline/test') {
+                    sh 'go mod download'
+                    sh 'go test -v ./main_test.go'
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            when {
+                expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}"
+            }
+        }
+        
+        stage('Deploy on Worker') {
+            when {
+                expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
                 sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                'docker run -d --network host --name app_${WORKER_NAME} --volume appData:/etc/todos ${REGISTRY}/${SAFE_BRANCH}'
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}'        
                 """
             }
         }

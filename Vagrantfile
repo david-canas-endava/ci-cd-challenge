@@ -47,8 +47,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     agent.vm.provision "shell", inline: <<-SHELL
       sudo apt update
       sudo apt install -y openjdk-17-jre
+      sudo apt install -y sshpass
+      # sudo snap remove go
+      sudo add-apt-repository ppa:longsleep/golang-backports
+      sudo apt update
+      sudo apt install -y golang-go
     SHELL
-
 
     agent.vm.provision "shell", inline: <<-SHELL
       sudo mkdir -p /home/jenkins_agent
@@ -58,13 +62,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       curl -sO http://192.168.56.10:8080/jnlpJars/agent.jar;java -jar agent.jar -url http://192.168.56.10:8080/ -secret 226828a6da74445c9a34609e8fbdf1559ecd7808e5afea4e2c69f4e784928b67 -name agent -webSocket -workDir "/home/jenkins_agent" & disown
     SHELL
-    # agent.vm.synced_folder "./app", "/app"
-    # agent.vm.provision "shell", inline: <<-SHELL
-    #   cd /app      
-    #   docker build -t app .
-    #   docker tag app 192.168.56.10:5000/app
-    #   docker push 192.168.56.10:5000/app
-    # SHELL
   end
 
   #MARK: workers
@@ -88,10 +85,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         sudo systemctl daemon-reload
         sudo systemctl restart docker
       SHELL
-
-      worker.vm.provision "shell", inline: <<-SHELL
-        docker run -d --network host --name app_#{name} --volume appData:/etc/todos 192.168.56.10:5000/app
-      SHELL
+      worker.vm.provision "shell", path: "./script/enableSSH.sh"
     end
   end
 
