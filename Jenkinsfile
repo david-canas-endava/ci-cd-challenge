@@ -60,7 +60,7 @@ pipeline {
                 dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     sh 'docker build -t app .'
                     sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
-                    sh "docker run -d --network host --volume appData:/etc/todos ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker run -d --network host --volume /etc/todos:/etc/todos ${REGISTRY}/${SAFE_BRANCH}"
                 }
             }
         }
