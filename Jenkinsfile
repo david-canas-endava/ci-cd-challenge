@@ -67,7 +67,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh 'pwd'
-                sh 'go test -v ./tests/main_test.go'
+                sh 'go test -v ./test/main_test.go'
             }
         }
         
