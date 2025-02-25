@@ -48,6 +48,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       sudo apt update
       sudo apt install -y openjdk-17-jre
       sudo apt install -y sshpass
+      # sudo snap remove go
+      sudo add-apt-repository ppa:longsleep/golang-backports
+      sudo apt update
       sudo apt install -y golang-go
     SHELL
 
