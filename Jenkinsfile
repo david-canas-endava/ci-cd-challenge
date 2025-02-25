@@ -3,20 +3,21 @@ pipeline {
     environment {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
-        BRANCH_NAME = "feature/jenkins" // Temporarily set this manually
-        SAFE_BRANCH = "feature-jenkins"
+        // BRANCH_NAME = "feature/jenkins" // Temporarily set this manually
+        // SAFE_BRANCH = "feature-jenkins"
     }
     stages {        
         stage('Prepare Environment') {
             steps {
                 script {
-                    // // Replace "/" with "-" so the tag is Docker-friendly.
-                    // env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
-                    // // Extract a key from the branch name.
-                    // // For example, "feature/jenkins" gives branchKey = "feature"
-                    // def branchKey = BRANCH_NAME.tokenize('/')[0]
-                    def branchKey = BRANCH_NAME
-                    // // Map branch keys to worker IPs.
+                    // Replace "/" with "-" so the tag is Docker-friendly.
+                    env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
+                    // Extract a key from the branch name.
+                    // For example, "feature/jenkins" gives branchKey = "feature"
+                    def branchKey = BRANCH_NAME.tokenize('/')[0]
+                    // Map branch keys to worker IPs.
+                    echo "branch name ${BRANCH_NAME}"
+                    echo "branch key ${branchKey}"
                     def workerMap = [
                         "prod1"   : "192.168.56.21",
                         "prod2"   : "192.168.56.22",
@@ -33,7 +34,7 @@ pipeline {
                         env.WORKER_NAME = "feature" 
                     }
                     
-                    // echo "For branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH} and deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
+                    echo "For branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH} and deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
                 }
             }
         }
@@ -50,9 +51,6 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 checkout scm
-                // If your Vagrantfile already syncs code into /app and you wish to use that directory,
-                // you can optionally copy the workspace code to /app:
-                // sh 'mkdir -p /app && cp -r $WORKSPACE/* /app/'
             }
         }
         
