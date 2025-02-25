@@ -54,35 +54,40 @@ pipeline {
             }
         }
         
-        // Build the Docker image, tag it, and push it.
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                // Ensure the target directory exists (if you intend to use /app)
-                sh 'mkdir -p /app'
-                
-                // Use the /app directory. If your checkout already happens in /app, adjust accordingly.
+                sh 'mkdir -p /home/jenkins_agent/workspace/githubPipeline/app'
                 dir('/home/jenkins_agent/workspace/githubPipeline/app') {
-                    // Build an image tagged as "app"
                     sh 'docker build -t app .'
-                    
-                    // Tag the built image with the registry and the branch-derived tag.
                     sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
-                    
-                    // Push the image to your local registry.
-                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}"
                 }
             }
         }
         
-        // SSH into the appropriate worker machine and run the container.
-        stage('Deploy on Worker') {
+        stage('Run Tests') {
             steps {
-                // The following command will SSH into the worker machine and run the container.
-                // The container will be named "app_${WORKER_NAME}" and will run the image we just pushed.
-                // Note: Make sure the agent’s SSH keys and authorization are correctly set up.
+                sh 'pwd'
+                sh 'go test -v ./tests/main_test.go'
+            }
+        }
+        
+        stage('Push Docker Image') {
+            when {
+                expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}"
+            }
+        }
+        
+        stage('Deploy on Worker') {
+            when {
+                expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                'docker run -d --network host --volume appData:/etc/todos ${REGISTRY}/${SAFE_BRANCH}'
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \
+                'if [ $(docker ps -q) ]; then docker stop $(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}'        
                 """
             }
         }

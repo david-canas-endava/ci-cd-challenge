@@ -48,6 +48,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       sudo apt update
       sudo apt install -y openjdk-17-jre
       sudo apt install -y sshpass
+      sudo apt install -y golang-go
     SHELL
 
     agent.vm.provision "shell", inline: <<-SHELL
