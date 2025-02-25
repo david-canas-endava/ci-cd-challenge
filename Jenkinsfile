@@ -11,19 +11,16 @@ pipeline {
             steps {
                 script {
                     echo 'Pulling... ' + env.GIT_BRANCH
-                    echo "Branch Name: ${env.BRANCH_NAME}"
                     // Replace "/" with "-" so the tag is Docker-friendly.
-                    BRANCH_NAME = env.BRANCH_NAME
+                    def BRANCH_NAME = env.GIT_BRANCH
                     env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
                     // Extract a key from the branch name.
                     // For example, "feature/jenkins" gives branchKey = "feature"
-                    def branchKey = BRANCH_NAME.tokenize('/')[0]
+                    def branchKey = BRANCH_NAME.tokenize('/')[1]
                     // Map branch keys to worker IPs.
                     echo "branch name ${BRANCH_NAME}"
                     echo "branch key ${branchKey}"
                     def workerMap = [
-                        "prod1"   : "192.168.56.21",
-                        "prod2"   : "192.168.56.22",
                         "dev"     : "192.168.56.23",
                         "feature" : "192.168.56.24"
                     ]
