@@ -10,6 +10,8 @@ pipeline {
         stage('Prepare Environment') {
             steps {
                 script {
+                    echo 'Pulling... ' + env.GIT_BRANCH
+                    echo "Branch Name: ${env.BRANCH_NAME}"
                     // Replace "/" with "-" so the tag is Docker-friendly.
                     BRANCH_NAME = env.BRANCH_NAME
                     env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
