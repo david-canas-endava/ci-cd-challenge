@@ -67,6 +67,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh 'pwd'
+                sh 'go mod download'
                 sh 'go test -v ./test/main_test.go'
             }
         }
