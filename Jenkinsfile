@@ -60,15 +60,17 @@ pipeline {
                 dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     sh 'docker build -t app .'
                     sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}"
                 }
             }
         }
         
         stage('Run Tests') {
             steps {
-                dir('/home/jenkins_agent/workspace/githubPipeline/test')
-                sh 'go mod download'
-                sh 'go test -v ./main_test.go'
+                dir('/home/jenkins_agent/workspace/githubPipeline/test') {
+                    sh 'go mod download'
+                    sh 'go test -v ./main_test.go'
+                }
             }
         }
         
