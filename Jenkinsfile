@@ -66,10 +66,9 @@ pipeline {
         
         stage('Run Tests') {
             steps {
-                sh 'pwd'
-                sh 'cd test'
+                dir('/home/jenkins_agent/workspace/githubPipeline/test')
                 sh 'go mod download'
-                sh 'go test -v ./test/main_test.go'
+                sh 'go test -v ./main_test.go'
             }
         }
         
