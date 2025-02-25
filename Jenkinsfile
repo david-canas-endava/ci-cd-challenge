@@ -60,6 +60,7 @@ pipeline {
                 dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     sh 'docker build -t app .'
                     sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi"
                     sh "docker run -d --network host --volume /etc/todos:/etc/todos ${REGISTRY}/${SAFE_BRANCH}"
                 }
             }
@@ -90,7 +91,7 @@ pipeline {
             steps {
                 sh """
                 sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}'        
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}'
                 """
             }
         }
