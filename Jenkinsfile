@@ -11,6 +11,7 @@ pipeline {
             steps {
                 script {
                     // Replace "/" with "-" so the tag is Docker-friendly.
+                    BRANCH_NAME = env.BRANCH_NAME
                     env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
                     // Extract a key from the branch name.
                     // For example, "feature/jenkins" gives branchKey = "feature"
