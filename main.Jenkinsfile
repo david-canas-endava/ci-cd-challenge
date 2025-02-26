@@ -94,12 +94,12 @@ pipeline {
             }
             steps {
                 script {
-                    def deployCommand = """
-                    sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                    'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
-                    """
-                    sh deployCommand
+                    env.WORKER_IP = env.WORKER_IP ?: '192.168.56.24'  // Fallback in case it's missing
                 }
+                sh """
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
+                """
             }
         }
     }
