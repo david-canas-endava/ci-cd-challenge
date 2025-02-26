@@ -3,8 +3,8 @@ pipeline {
     environment {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
-        WORKER_IP = ""
-        SECOND_WORKER_IP = ""
+        WORKER_IP = "192.168.56.21"
+        SECOND_WORKER_IP = "192.168.56.22"
     }
     stages {        
         stage('Prepare Environment') {
@@ -22,9 +22,9 @@ pipeline {
                     
                     if (BRANCH_NAME == "origin/feature/loadbalance") {
                         echo "Pipeline running for Main branch."
-                        env.WORKER_IP = "192.168.56.21"
-                        env.WORKER_NAME = "prod1"
-                        env.SECOND_WORKER_IP = "192.168.56.22"
+                        // env.WORKER_IP = "192.168.56.21"
+                        // env.WORKER_NAME = "prod1"
+                        // env.SECOND_WORKER_IP = "192.168.56.22"
                         // env.WORKER_IP = workerMap["prod1"]
                         // env.WORKER_NAME = "prod1"
                         // env.SECOND_WORKER_IP = workerMap["prod2"]
