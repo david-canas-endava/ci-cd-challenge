@@ -10,6 +10,11 @@ pipeline {
         stage('Prepare Environment') {
             steps {
                 script {
+                    if (env.BRANCH_NAME == 'origin/Main') {
+                        echo "Skipping build for main branch"
+                        currentBuild.result = 'ABORTED'
+                        error("Main branch is managed separately. Stopping the pipeline.")
+                    }
                     echo 'Pulling... ' + env.GIT_BRANCH
                     // Replace "/" with "-" so the tag is Docker-friendly.
                     def BRANCH_NAME = env.GIT_BRANCH
