@@ -9,6 +9,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.56.10"  # Static IP
     master.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+    master.vm.network "forwarded_port", guest: 9000, host: 9000, host_ip: "127.0.0.1"
     master.vm.provider "virtualbox" do |vb|
       vb.memory = 4096  # 4GB RAM
       vb.cpus = 2       # 2 CPU cores
@@ -19,8 +20,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     SHELL
     master.vm.synced_folder "./script/master", "/app"
     master.vm.provision "shell", inline: <<-SHELL
-    cd /app
-    docker compose up -d
+      sudo apt install -y sshpass    
+      cd /app
+      docker compose up --build -d
     SHELL
     master.vm.provision "shell", path: "./script/installJenkins.sh"
     master.vm.provision "shell", inline: <<-SHELL

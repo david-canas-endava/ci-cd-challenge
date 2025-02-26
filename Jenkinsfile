@@ -10,7 +10,7 @@ pipeline {
         stage('Prepare Environment') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'origin/Main') {
+                    if (env.BRANCH_NAME == 'origin/feature/loadbalance') {
                         echo "Skipping build for main branch"
                         currentBuild.result = 'ABORTED'
                         error("Main branch is managed separately. Stopping the pipeline.")

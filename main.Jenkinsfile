@@ -3,7 +3,8 @@ pipeline {
     environment {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
-        WORKER_IP = "192.168.56.22"
+        WORKER_IP = ""
+        SECOND_WORKER_IP = ""
     }
     stages {        
         stage('Prepare Environment') {
@@ -14,15 +15,16 @@ pipeline {
                     env.SAFE_BRANCH = BRANCH_NAME.replaceAll('/', '-')                    
                     def branchKey = BRANCH_NAME.tokenize('/')[1]
 
-                    // Define worker map
                     def workerMap = [
-                        "prod1"     : "192.168.56.21",                        
+                        "prod1"     : "192.168.56.21",
+                        "prod2"     : "192.168.56.22",
                     ]
                     
-                    if (BRANCH_NAME == "origin/main") {
+                    if (BRANCH_NAME == "origin/feature/loadbalance") {
                         echo "Pipeline running for Main branch."
-                        env.WORKER_IP = workerMap['main']
-                        env.WORKER_NAME = "main"
+                        env.WORKER_IP = workerMap['prod1']
+                        env.WORKER_NAME = "prod1"
+                        env.SECOND_WORKER_IP = workerMap['prod2']
                     }
                     
                     echo "Branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH}, deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
@@ -92,12 +94,18 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Deploying to worker: ${WORKER_IP}"
+                    echo "Deploying to worker: ${env.WORKER_IP}"
                 }
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.WORKER_IP} \\
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
+
+                sh """
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.SECOND_WORKER_IP} \\
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
+                """
+
             }
         }
     }
