@@ -3,6 +3,7 @@ pipeline {
     environment {
         REGISTRY  = "192.168.56.10:5000"
         SSH_USER  = "vagrant"
+        WORKER_IP = "192.168.56.22"
     }
     stages {        
         stage('Prepare Environment') {
@@ -77,10 +78,7 @@ pipeline {
             }
         }
 
-        stage('Approval for Deploy (Main Branch)') {
-            when {
-                expression { return env.GIT_BRANCH == 'origin/feature/Main' }
-            }
+        stage('Approval for Deploy (Main Branch)') {            
             steps {
                 script {
                     input message: "Deploy to production?", ok: "Approve Deployment"
@@ -94,7 +92,7 @@ pipeline {
             }
             steps {
                 script {
-                    env.WORKER_IP = env.WORKER_IP ?: '192.168.56.24'  // Fallback in case it's missing
+                    echo "Deploying to worker: ${WORKER_IP}"
                 }
                 sh """
                 sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
