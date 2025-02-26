@@ -28,6 +28,9 @@ pipeline {
                     }
                     
                     echo "Branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH}, deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
+
+                    echo "WORKER_IP inside script: ${env.WORKER_IP}"
+                    echo "SECOND_WORKER_IP inside script: ${env.SECOND_WORKER_IP}"
                 }
             }
         }
@@ -35,6 +38,8 @@ pipeline {
         stage('Echo on Agent') {
             steps {
                 sh 'echo "Running on agent: $(hostname)"'
+                echo "WORKER_IP outside script: ${env.WORKER_IP}"
+                echo "SECOND_WORKER_IP outside script: ${env.SECOND_WORKER_IP}"
             }
         }
 
