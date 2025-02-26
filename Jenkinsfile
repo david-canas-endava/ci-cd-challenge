@@ -46,11 +46,15 @@ pipeline {
             }
         }
         
-        // Check out the code.
-        // In a multibranch pipeline, Jenkins checks out the branch automatically.
         stage('Checkout Code') {
             steps {
                 checkout scm
+                script {
+                    env.IMAGE_VERSION = sh(
+                        script: '[ -s version ] && cat version || echo "latest"',
+                        returnStdout: true
+                    ).trim()
+                }
             }
         }
         
@@ -59,9 +63,9 @@ pipeline {
                 sh 'mkdir -p /home/jenkins_agent/workspace/githubPipeline/app'
                 dir('/home/jenkins_agent/workspace/githubPipeline/app') {
                     sh 'docker build -t app .'
-                    sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}"
                     sh "if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi"
-                    sh "docker run -d --network host --volume /etc/todos:/etc/todos ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker run -d --network host --volume /etc/todos:/etc/todos ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}"
                 }
             }
         }
@@ -80,7 +84,7 @@ pipeline {
                 expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
-                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}"
+                    sh "docker push ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}"
             }
         }
         
@@ -90,8 +94,8 @@ pipeline {
             }
             steps {
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP} \\
-                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}'
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_IP}:${IMAGE_VERSION} \\
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
             }
         }
