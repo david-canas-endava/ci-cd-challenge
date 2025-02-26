@@ -22,9 +22,12 @@ pipeline {
                     
                     if (BRANCH_NAME == "origin/feature/loadbalance") {
                         echo "Pipeline running for Main branch."
-                        env.WORKER_IP = workerMap['prod1']
+                        env.WORKER_IP = "192.168.56.21"
                         env.WORKER_NAME = "prod1"
-                        env.SECOND_WORKER_IP = workerMap['prod2']
+                        env.SECOND_WORKER_IP = "192.168.56.22"
+                        // env.WORKER_IP = workerMap["prod1"]
+                        // env.WORKER_NAME = "prod1"
+                        // env.SECOND_WORKER_IP = workerMap["prod2"]
                     }
                     
                     echo "Branch ${BRANCH_NAME}, using safe tag ${env.SAFE_BRANCH}, deploying to worker ${env.WORKER_NAME} (${env.WORKER_IP})"
