@@ -19,7 +19,7 @@ pipeline {
                         "prod1"     : "192.168.56.21",                        
                     ]
                     
-                    if (BRANCH_NAME == 'origin/feature/Main') {
+                    if (BRANCH_NAME == "origin/main") {
                         echo "Pipeline running for Main branch."
                         env.WORKER_IP = workerMap['main']
                         env.WORKER_NAME = "main"
