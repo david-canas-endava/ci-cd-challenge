@@ -1,12 +1,4 @@
 services:
-  nginx:
-    image: nginx:latest
-    container_name: nginx_server
-    network_mode: "host"  # Uses the host network
-    restart: unless-stopped
-    # volumes:
-    #   - ./nginx.conf:/etc/nginx/nginx.conf:ro
-
   registry:
     image: registry:2
     container_name: docker-registry
@@ -15,6 +7,10 @@ services:
       - "5000:5000"
     volumes:
       - registry_data:/var/lib/registry
+
+  loadbalancer:
+    build: ./loadBalancer
+    network_mode: "host"
 
 volumes:
   registry_data:
