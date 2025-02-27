@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os/exec"
 	"strconv"
@@ -12,10 +13,40 @@ import (
 )
 
 var (
-	servers = []string{"192.168.56.21", "192.168.56.22"}
-	cpuLoad = make(map[string]float64)
-	mu      sync.Mutex
+	servers          = []string{"192.168.56.21", "192.168.56.22"}
+	availableServers = []string{}
+	cpuLoad         = make(map[string]float64)
+	mu              sync.Mutex
 )
+
+// Check if a server is available via SSH
+func isServerAvailable(host string) bool {
+	command := fmt.Sprintf(`sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@%s "echo OK"`, host)
+	cmd := exec.Command("sh", "-c", command)
+	err := cmd.Run()
+	return err == nil
+}
+
+// Update available servers every 5 minutes
+func monitorServerAvailability() {
+	for {
+		tempAvailable := []string{}
+
+		for _, server := range servers {
+			if isServerAvailable(server) {
+				tempAvailable = append(tempAvailable, server)
+			}
+		}
+
+		mu.Lock()
+		availableServers = tempAvailable
+		mu.Unlock()
+
+		fmt.Println("Available servers:", availableServers)
+
+		time.Sleep(1 * time.Minute) // Check every 5 minutes
+	}
+}
 
 // Fetch CPU usage from a remote server via SSH
 func getCPUUsage(host string) (float64, error) {
@@ -37,7 +68,11 @@ func monitorCPUUsage() {
 	for {
 		tempLoad := make(map[string]float64)
 
-		for _, server := range servers {
+		mu.Lock()
+		activeServers := availableServers // Copy available servers to avoid locking too long
+		mu.Unlock()
+
+		for _, server := range activeServers {
 			usage, err := getCPUUsage(server)
 			if err == nil {
 				tempLoad[server] = usage
@@ -51,29 +86,52 @@ func monitorCPUUsage() {
 		cpuLoad = tempLoad
 		mu.Unlock()
 
-		// Wait 5 minutes before updating again
-		time.Sleep(5 * time.Minute)
+		time.Sleep(1 * time.Minute)
 	}
 }
-func getLeastLoadedServer() string {
+
+
+func getRandomServerByLoad() string {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if len(cpuLoad) == 0 {
-		return servers[0] // Fallback to first server if no data
+	if len(availableServers) == 0 {
+		fmt.Println("No available servers!")
+		return ""
 	}
 
-	leastLoaded := servers[0]
-	for _, server := range servers {
-		if cpuLoad[server] < cpuLoad[leastLoaded] {
-			leastLoaded = server
+	var totalWeight float64
+	weights := make(map[string]float64)
+
+	for _, server := range availableServers {
+		weight := 100 - cpuLoad[server]
+		if weight < 0 {
+			weight = 0 // Prevent negative weights
+		}
+		weights[server] = weight
+		totalWeight += weight
+	}
+
+	if totalWeight == 0 {
+		return availableServers[rand.Intn(len(availableServers))] // All servers overloaded, pick random
+	}
+
+	// Random selection based on weights
+	rnd := rand.Float64() * totalWeight
+	accumulated := 0.0
+
+	for _, server := range availableServers {
+		accumulated += weights[server]
+		if rnd <= accumulated {
+			return server
 		}
 	}
-	return leastLoaded
+
+	return availableServers[0] // Fallback case
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	target := getLeastLoadedServer()
+	target := getRandomServerByLoad()
 	if target == "" {
 		http.Error(w, "No available servers", http.StatusServiceUnavailable)
 		return
@@ -114,7 +172,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Start CPU monitoring goroutine
+	rand.Seed(time.Now().UnixNano()) // Ensure randomness
+
+	// Start monitoring goroutines
+	go monitorServerAvailability()
 	go monitorCPUUsage()
 
 	http.HandleFunc("/", handleRequest)
