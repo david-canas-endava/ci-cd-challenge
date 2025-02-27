@@ -99,18 +99,18 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Deploying to Worker 1: ${WORKER_1}"
+                    echo "Deploying to Worker 1: ${env.WORKER_IP}"
                 }
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_1} \\
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.WORKER_IP} \\
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
 
                 script {
-                    echo "Deploying to Worker 2: ${WORKER_2}"
+                    echo "Deploying to Worker 2: ${env.SECOND_WORKER_IP}"
                 }
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_2} \\
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.SECOND_WORKER_IP} \\
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
             }
@@ -122,10 +122,10 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Deploying canary to Worker 1: ${WORKER_1}"
+                    echo "Deploying canary to Worker 1: ${env.WORKER_IP}"
                 }
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_1} \\
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.WORKER_IP} \\
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
                 
@@ -158,10 +158,10 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Deploying canary to Worker 2: ${WORKER_2}"
+                    echo "Deploying canary to Worker 2: ${env.SECOND_WORKER_IP}"
                 }
                 sh """
-                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${WORKER_2} \\
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.SECOND_WORKER_IP} \\
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
                 
