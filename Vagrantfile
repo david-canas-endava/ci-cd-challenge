@@ -86,6 +86,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         echo -e '{ \n\t "insecure-registries" : [ "192.168.56.10:5000" ]\n}' | sudo tee /etc/docker/daemon.json
         sudo systemctl daemon-reload
         sudo systemctl restart docker
+        sudo apt install -y sysstat
       SHELL
       worker.vm.provision "shell", path: "./script/enableSSH.sh"
     end
