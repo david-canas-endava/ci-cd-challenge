@@ -11,6 +11,7 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'origin/main') {
+
                         echo "Skipping build for main branch"
                         currentBuild.result = 'ABORTED'
                         error("Main branch is managed separately. Stopping the pipeline.")
