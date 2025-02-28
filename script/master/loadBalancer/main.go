@@ -15,8 +15,8 @@ import (
 var (
 	servers          = []string{"192.168.56.21", "192.168.56.22"}
 	availableServers = []string{}
-	cpuLoad         = make(map[string]float64)
-	mu              sync.Mutex
+	cpuLoad          = make(map[string]float64)
+	mu               sync.Mutex
 )
 
 // Check if a server is available via SSH
@@ -89,7 +89,6 @@ func monitorCPUUsage() {
 		time.Sleep(1 * time.Minute)
 	}
 }
-
 
 func getRandomServerByLoad() string {
 	mu.Lock()
@@ -176,6 +175,7 @@ func main() {
 
 	// Start monitoring goroutines
 	go monitorServerAvailability()
+	time.Sleep(10 * time.Second) // sleep to allow work stealing
 	go monitorCPUUsage()
 
 	http.HandleFunc("/", handleRequest)
