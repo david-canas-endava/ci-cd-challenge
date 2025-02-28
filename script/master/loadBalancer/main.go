@@ -132,6 +132,7 @@ func getRandomServerByLoad() string {
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	target := getRandomServerByLoad()
+
 	if target == "" {
 		http.Error(w, "No available servers", http.StatusServiceUnavailable)
 		return
@@ -170,14 +171,12 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Copy response body to client
 	io.Copy(w, resp.Body)
 }
-func handleMultiple() {
-	monitorServerAvailability()
-	monitorCPUUsage()
-}
+
 func main() {
-	go handleMultiple()
+	go monitorServerAvailability()
+	go monitorCPUUsage()
+
 	http.HandleFunc("/", handleRequest)
 	fmt.Println("Load balancer running on port 9000...")
 	http.ListenAndServe(":9000", nil)
 }
-

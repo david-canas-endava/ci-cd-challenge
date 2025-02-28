@@ -21,13 +21,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     master.vm.synced_folder "./script/master", "/app"
     master.vm.provision "shell", inline: <<-SHELL
       sudo apt install -y sshpass    
-      sudo add-apt-repository ppa:longsleep/golang-backports
-      sudo apt update
-      sudo apt install -y golang-go
       cd /app
       docker compose up --build -d
-      cd /app/loadBalancer
-      go run .
     SHELL
     master.vm.provision "shell", path: "./script/installJenkins.sh"
     master.vm.provision "shell", inline: <<-SHELL
