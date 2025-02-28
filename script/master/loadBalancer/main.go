@@ -21,7 +21,7 @@ var (
 
 // Check if a server is available via SSH
 func isServerAvailable(host string) bool {
-	command := fmt.Sprintf(`sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@%s "echo OK"`, host)
+	command := fmt.Sprintf(`sudo sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@%s "echo OK"`, host)
 	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Run()
 	return err == nil
@@ -130,7 +130,9 @@ func getRandomServerByLoad() string {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("servers", servers)
 	target := getRandomServerByLoad()
+	fmt.Println("target", target)
 	if target == "" {
 		http.Error(w, "No available servers", http.StatusServiceUnavailable)
 		return
@@ -172,9 +174,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	go monitorServerAvailability()
-	time.Sleep(10 * time.Second) // sleep to allow work stealing
 	go monitorCPUUsage()
-
 	http.HandleFunc("/", handleRequest)
 	fmt.Println("Load balancer running on port 9000...")
 	http.ListenAndServe(":9000", nil)
