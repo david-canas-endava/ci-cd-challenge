@@ -171,9 +171,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano()) // Ensure randomness
-
-	// Start monitoring goroutines
 	go monitorServerAvailability()
 	time.Sleep(10 * time.Second) // sleep to allow work stealing
 	go monitorCPUUsage()
