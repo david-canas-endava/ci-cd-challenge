@@ -116,6 +116,18 @@ pipeline {
             }
         }
 
+        stage('Release latest') {
+            when {
+                expression { env.DEPLOYMENT_TYPE == 'Simple Deploy' }
+            }
+            steps {
+               dir('/home/jenkins_agent/workspace/githubPipeline/app') {
+                    sh 'docker build -t app .'
+                    sh "docker tag app ${REGISTRY}/${SAFE_BRANCH}:latest"
+                }
+            }
+        }
+
         stage('Canary Deployment') {
             when {
                 expression { env.DEPLOYMENT_TYPE == 'Canary Deploy' }
@@ -129,8 +141,7 @@ pipeline {
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
                 
-                // Placeholder for HTTP signal (not implemented yet)
-                // sh "curl -X POST http://monitoring-service/canary-deployed"
+
             }
         }
 
@@ -165,46 +176,25 @@ pipeline {
                 'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
                 """
                 
-                // Placeholder for HTTP signal (not implemented yet)
-                // sh "curl -X POST http://monitoring-service/canary-deployed"
+
             }
         }
 
-        // stage('Deploy on Worker 1') {
-        //     when {
-        //         expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-        //     }
-        //     steps {
-        //         script {
-        //             echo "Deploying to worker: ${env.WORKER_IP}"
-        //         }
-        //         sh """
-        //         sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.WORKER_IP} \\
-        //         'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
-        //         """
-        //     }
-        // }
-        // stage('Approval for Deploy (Main Branch)') {            
-        //     steps {
-        //         script {
-        //             input message: "Deploy to production?", ok: "Approve Deployment"
-        //         }
-        //     }
-        // }
-        
-        // stage('Deploy on Worker 2') {
-        //     when {
-        //         expression { return currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-        //     }
-        //     steps {
-        //         script {
-        //             echo "Deploying to worker: ${env.WORKER_IP}"
-        //         }
-        //         sh """
-        //         sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.SECOND_WORKER_IP} \\
-        //         'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:${IMAGE_VERSION}'
-        //         """
-        //     }
-        // }
+        stage('Aborted canary') {
+            when {
+                expression { env.DEPLOYMENT_TYPE == 'Canary Deploy' && env.CONTINUE_DEPLOYMENT == 'No' }
+            }
+            steps {
+                script {
+                    echo "Didn't like the canary? don't worry, we got you"
+                }
+                sh """
+                sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.WORKER_IP} \\
+                'if [ \$(docker ps -q) ]; then docker stop \$(docker ps -a -q); fi && docker run -d --network host --volume appData:/etc/todos --pull=always ${REGISTRY}/${SAFE_BRANCH}:latest'
+                """
+                
+            }
+        }
+
     }
 }
