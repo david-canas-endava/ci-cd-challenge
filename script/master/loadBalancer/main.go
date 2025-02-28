@@ -131,6 +131,7 @@ func getRandomServerByLoad() string {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("servers", servers)
 	target := getRandomServerByLoad()
 	fmt.Println("target", target)
@@ -180,4 +181,3 @@ func main() {
 	fmt.Println("Load balancer running on port 9000...")
 	http.ListenAndServe(":9000", nil)
 }
-
