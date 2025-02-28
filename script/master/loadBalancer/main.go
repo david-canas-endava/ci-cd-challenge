@@ -90,6 +90,7 @@ func monitorCPUUsage() {
 	}
 }
 
+
 func getRandomServerByLoad() string {
 	mu.Lock()
 	defer mu.Unlock()
@@ -179,3 +180,4 @@ func main() {
 	fmt.Println("Load balancer running on port 9000...")
 	http.ListenAndServe(":9000", nil)
 }
+
