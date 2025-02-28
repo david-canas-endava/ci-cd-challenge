@@ -12,5 +12,6 @@ services:
     build: ./loadBalancer
     network_mode: "host"
 
+
 volumes:
   registry_data:
