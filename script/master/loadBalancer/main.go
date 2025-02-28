@@ -90,7 +90,6 @@ func monitorCPUUsage() {
 	}
 }
 
-
 func getRandomServerByLoad() string {
 	mu.Lock()
 	defer mu.Unlock()
